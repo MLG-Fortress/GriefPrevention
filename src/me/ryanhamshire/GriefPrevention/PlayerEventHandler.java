@@ -750,7 +750,8 @@ class PlayerEventHandler implements Listener
         if(returnLocation != null)
         {
             PlayerEventHandler.portalReturnMap.remove(player.getUniqueId());
-            if(player.getLocation().getBlock().getType() == Material.PORTAL)
+			Material playerBlock = player.getLocation().getBlock().getType();
+			if(playerBlock == Material.PORTAL || (playerBlock.isTransparent() && playerBlock.isSolid()))
             {
                 player.teleport(returnLocation);
             }
