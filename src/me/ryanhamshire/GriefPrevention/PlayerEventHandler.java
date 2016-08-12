@@ -750,8 +750,8 @@ class PlayerEventHandler implements Listener
         if(returnLocation != null)
         {
             PlayerEventHandler.portalReturnMap.remove(player.getUniqueId());
-			Material playerBlock = player.getLocation().getBlock().getType();
-			if(playerBlock == Material.PORTAL || (playerBlock.isTransparent() && playerBlock.isSolid()))
+			Block playerBlock = player.getLocation().getBlock();
+			if(playerBlock.getType() == Material.PORTAL || isInTransparentBlock(playerBlock))
             {
                 player.teleport(returnLocation);
             }
@@ -772,6 +772,19 @@ class PlayerEventHandler implements Listener
                 }
             }
         }
+	}
+	boolean isInTransparentBlock(Block block)
+	{
+		Material playerBlock = block.getType();
+		//Most blocks you can "stand" inside but cannot pass (isSolid) usually let light through (isTransparent)
+		if ((!playerBlock.isTransparent() || !playerBlock.isSolid()))
+			return false;
+		if (block.getRelative(BlockFace.EAST).getType() == Material.PORTAL
+				|| block.getRelative(BlockFace.WEST).getType() == Material.PORTAL
+				|| block.getRelative(BlockFace.NORTH).getType() == Material.PORTAL
+				|| block.getRelative(BlockFace.SOUTH).getType() == Material.PORTAL)
+			return true;
+		return false;
 	}
 	
 	//when a player spawns, conditionally apply temporary pvp protection 

@@ -20,6 +20,8 @@ package me.ryanhamshire.GriefPrevention;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
 
 //players can be "trapped" in a portal frame if they don't have permission to break
@@ -45,9 +47,9 @@ class CheckForPortalTrapTask implements Runnable
 	    //if player has logged out, do nothing
 	    if(!player.isOnline()) return;
 
-		Material playerBlock = this.player.getLocation().getBlock().getType();
+		Block playerBlock = this.player.getLocation().getBlock();
 	    //if still standing in a portal frame, teleport him back through
-	    if(playerBlock == Material.PORTAL || (playerBlock.isTransparent() && playerBlock.isSolid()))
+	    if(playerBlock.getType() == Material.PORTAL || isInTransparentBlock(playerBlock))
 	    {
 	        this.player.teleport(this.returnLocation);
 	    }
@@ -57,5 +59,19 @@ class CheckForPortalTrapTask implements Runnable
 	    {
 	        PlayerEventHandler.portalReturnMap.remove(player.getUniqueId());
 	    }
+	}
+
+	boolean isInTransparentBlock(Block block)
+	{
+		Material playerBlock = block.getType();
+		//Most blocks you can "stand" inside but cannot pass (isSolid) usually let light through (isTransparent)
+		if ((!playerBlock.isTransparent() || !playerBlock.isSolid()))
+			return false;
+		if (block.getRelative(BlockFace.EAST).getType() == Material.PORTAL
+				|| block.getRelative(BlockFace.WEST).getType() == Material.PORTAL
+				|| block.getRelative(BlockFace.NORTH).getType() == Material.PORTAL
+				|| block.getRelative(BlockFace.SOUTH).getType() == Material.PORTAL)
+			return true;
+		return false;
 	}
 }
