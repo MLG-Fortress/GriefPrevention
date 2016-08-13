@@ -49,7 +49,7 @@ class CheckForPortalTrapTask implements Runnable
 
 		Block playerBlock = this.player.getLocation().getBlock();
 	    //if still standing in a portal frame, teleport him back through
-	    if(playerBlock.getType() == Material.PORTAL || isInTransparentBlock(playerBlock))
+	    if(playerBlock.getType() == Material.PORTAL || isInNonOccludingBlock(playerBlock))
 	    {
 	        this.player.teleport(this.returnLocation);
 	    }
@@ -61,11 +61,11 @@ class CheckForPortalTrapTask implements Runnable
 	    }
 	}
 
-	boolean isInTransparentBlock(Block block)
+	boolean isInNonOccludingBlock(Block block)
 	{
 		Material playerBlock = block.getType();
-		//Most blocks you can "stand" inside but cannot pass (isSolid) usually let light through (isTransparent)
-		if ((!playerBlock.isTransparent() || !playerBlock.isSolid()))
+		//Most blocks you can "stand" inside but cannot pass (isSolid) usually can be seen through (!isOccluding)
+		if ((!playerBlock.isSolid() || playerBlock.isOccluding()))
 			return false;
 		if (block.getRelative(BlockFace.EAST).getType() == Material.PORTAL
 				|| block.getRelative(BlockFace.WEST).getType() == Material.PORTAL
