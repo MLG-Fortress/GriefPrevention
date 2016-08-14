@@ -148,6 +148,16 @@ class PlayerEventHandler implements Listener
 		//troll and excessive profanity filter
 		else if(!player.hasPermission("griefprevention.spam") && this.bannedWordFinder.hasMatch(message))
         {
+		    //allow admins to see the soft-muted text
+		    String notificationMessage = "(Muted " + player.getName() + "): " + message;
+		    for(Player recipient : recipients)
+            {
+                if(recipient.hasPermission("griefprevention.eavesdrop"))
+                {
+                    recipient.sendMessage(ChatColor.GRAY + notificationMessage);
+                }
+            }
+		    
 		    //limit recipients to sender
 		    recipients.clear();
             recipients.add(player);
@@ -168,8 +178,7 @@ class PlayerEventHandler implements Listener
             //otherwise assume chat troll and mute all chat from this sender until an admin says otherwise
             else if(GriefPrevention.instance.config_trollFilterEnabled)
             {
-            	String notificationMessage = "(Auto-Muted " + player.getName() + "): " + message;
-                GriefPrevention.AddLogEntry("Auto-muted new player " + player.getName() + " for profanity shortly after join.  Use /SoftMute to undo.", CustomLogEntryTypes.AdminActivity);
+            	GriefPrevention.AddLogEntry("Auto-muted new player " + player.getName() + " for profanity shortly after join.  Use /SoftMute to undo.", CustomLogEntryTypes.AdminActivity);
                 GriefPrevention.AddLogEntry(notificationMessage, CustomLogEntryTypes.MutedChat, false);
                 GriefPrevention.instance.dataStore.toggleSoftMute(player.getUniqueId());
             }
@@ -1076,6 +1085,9 @@ class PlayerEventHandler implements Listener
 		//these rules only apply to siege worlds only
 		if(!GriefPrevention.instance.config_siege_enabledWorlds.contains(player.getWorld())) return;
 		
+		//these rules do not apply to admins
+		if(player.hasPermission("griefprevention.siegeteleport")) return;
+		
 		Location source = event.getFrom();
 		Claim sourceClaim = this.dataStore.getClaimAt(source, false, playerData.lastClaim);
 		if(sourceClaim != null && sourceClaim.siegeData != null)
@@ -1731,8 +1743,8 @@ class PlayerEventHandler implements Listener
 			ItemStack itemInHand = GriefPrevention.instance.getItemInHand(player, hand);
 			Material materialInHand = itemInHand.getType();		
 			
-			//if it's bonemeal or armor stand or spawn egg, check for build permission (ink sac == bone meal, must be a Bukkit bug?)
-			if(clickedBlock != null && (materialInHand == Material.INK_SACK || materialInHand == Material.ARMOR_STAND || materialInHand == Material.MONSTER_EGG))
+			//if it's bonemeal, armor stand, spawn egg, etc - check for build permission (ink sac == bone meal, must be a Bukkit bug?)
+			if(clickedBlock != null && (materialInHand == Material.INK_SACK || materialInHand == Material.ARMOR_STAND || materialInHand == Material.MONSTER_EGG || materialInHand == Material.END_CRYSTAL))
 			{
 				String noBuildReason = GriefPrevention.instance.allowBuild(player, clickedBlock.getLocation(), clickedBlockType);
 				if(noBuildReason != null)
