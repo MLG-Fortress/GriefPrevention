@@ -66,7 +66,12 @@ class CheckForPortalTrapTask implements Runnable
 		Material playerBlock = block.getType();
 		//Most blocks you can "stand" inside but cannot pass (isSolid) usually can be seen through (!isOccluding)
 		if ((!playerBlock.isSolid() || playerBlock.isOccluding()))
-			return false;
+		{
+			//Check the block above
+			playerBlock = block.getRelative(BlockFace.UP).getType();
+			if ((!playerBlock.isSolid() || playerBlock.isOccluding()))
+				return false;
+		}
 		if (block.getRelative(BlockFace.EAST).getType() == Material.PORTAL
 				|| block.getRelative(BlockFace.WEST).getType() == Material.PORTAL
 				|| block.getRelative(BlockFace.NORTH).getType() == Material.PORTAL
