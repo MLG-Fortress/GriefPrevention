@@ -55,6 +55,7 @@ import org.bukkit.event.block.BlockPistonEvent;
 import org.bukkit.event.block.BlockPistonExtendEvent;
 import org.bukkit.event.block.BlockPistonRetractEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.block.BlockFertilizeEvent;
 import org.bukkit.event.block.BlockSpreadEvent;
 import org.bukkit.event.block.SignChangeEvent;
 import org.bukkit.event.entity.EntityChangeBlockEvent;
@@ -1022,6 +1023,53 @@ public class BlockEventHandler implements Listener
             event.setCancelled(true);
             GriefPrevention.sendMessage(shooter, TextMode.Err, allowContainer.get());
             return;
+        }
+    }
+
+    // Prevent moss bonemeal growth from affecting blocks across claim boundaries.
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onBlockFertilize(BlockFertilizeEvent event)
+    {
+        // Don't track in worlds where claims are not enabled.
+        if (!GriefPrevention.instance.claimsEnabledForWorld(event.getBlock().getWorld())) return;
+
+        // Scope to moss only to avoid broader behavior changes in legacy.
+        if (event.getBlock().getType() != Material.MOSS_BLOCK) return;
+
+        Player player = event.getPlayer();
+
+        // Determine source claim for non-player sources (e.g., dispensers).
+        Claim sourceClaim = this.dataStore.getClaimAt(event.getBlock().getLocation(), false, null);
+
+        for (BlockState state : event.getBlocks())
+        {
+            Claim targetClaim = this.dataStore.getClaimAt(state.getLocation(), false, sourceClaim);
+
+            if (player != null)
+            {
+                if (targetClaim != null)
+                {
+                    Supplier<String> noBuildReason = targetClaim.checkPermission(player, ClaimPermission.Build, event);
+                    if (noBuildReason != null)
+                    {
+                        GriefPrevention.sendMessage(player, TextMode.Err, noBuildReason.get());
+                        event.setCancelled(true);
+                        return;
+                    }
+                }
+            }
+            else
+            {
+                // No player: allow only if owners match when entering a claim.
+                if (targetClaim != null)
+                {
+                    if (sourceClaim == null || !Objects.equals(targetClaim.getOwnerID(), sourceClaim.getOwnerID()))
+                    {
+                        event.setCancelled(true);
+                        return;
+                    }
+                }
+            }
         }
     }
 
